@@ -66,7 +66,7 @@ export async function callAIAPI(multiChoiceQuestion: string): Promise<APIRespons
       console.error('Failed to parse API response:', data);
       return {
         ANSWER: 'ERROR',
-        SHORT_EXPLANATION: 'Failed to parse API response'
+        "SHORT EXPLANATION": 'Failed to parse API response'
       };
     }
   } catch (error) {

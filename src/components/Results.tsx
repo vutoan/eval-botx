@@ -1,4 +1,4 @@
-import type { QuestionsCollection, TestResult } from "../types";
+import type { QuestionsCollection } from "../types";
 
 interface ResultsProps {
   questions: QuestionsCollection;
@@ -18,14 +18,6 @@ function Results({ questions }: ResultsProps) {
   );
   const overallAccuracy =
     totalTests > 0 ? (totalCorrect / totalTests) * 100 : 0;
-
-  const parseModelAnswer = (modelAnswer: string): TestResult | null => {
-    try {
-      return JSON.parse(modelAnswer);
-    } catch {
-      return null;
-    }
-  };
 
   const exportResults = () => {
     const dataStr = JSON.stringify(questions, null, 2);
