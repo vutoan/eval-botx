@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
-import { parseTextFile, convertToQuestionData } from '../utils/parser';
-import type { QuestionsCollection } from '../types';
+import { useState, useRef } from "react";
+import { parseXlsxFile, convertToQuestionData } from "../utils/parser";
+import type { QuestionsCollection } from "../types";
 
 interface FileUploadProps {
   onQuestionsLoaded: (questions: QuestionsCollection) => void;
@@ -17,25 +17,31 @@ function FileUpload({ onQuestionsLoaded }: FileUploadProps) {
     setError(null);
 
     try {
-      const text = await file.text();
-      const parsedQuestions = parseTextFile(text);
-      
+      const parsedQuestions = await parseXlsxFile(file);
+
       if (parsedQuestions.length === 0) {
-        throw new Error('No valid questions found in the file. Please check the format.');
+        throw new Error(
+          "No valid questions found in the file. Please check the format."
+        );
       }
 
       const questionsCollection = convertToQuestionData(parsedQuestions);
       onQuestionsLoaded(questionsCollection);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse file');
+      setError(err instanceof Error ? err.message : "Failed to parse file");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleFileSelect = (file: File) => {
-    if (!file.name.endsWith('.txt')) {
-      setError('Please select a .txt file');
+    const isXlsx =
+      /\.xlsx$/i.test(file.name) ||
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    if (!isXlsx) {
+      setError("Please select an .xlsx file");
       return;
     }
     handleFileRead(file);
@@ -44,7 +50,7 @@ function FileUpload({ onQuestionsLoaded }: FileUploadProps) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -76,11 +82,13 @@ function FileUpload({ onQuestionsLoaded }: FileUploadProps) {
     <div className="file-upload">
       <h2>Upload Questions File</h2>
       <p className="upload-description">
-        Upload a .txt file containing questions in the specified format
+        Upload an .xlsx file containing questions in the specified format
       </p>
 
       <div
-        className={`upload-area ${isDragOver ? 'drag-over' : ''} ${isProcessing ? 'processing' : ''}`}
+        className={`upload-area ${isDragOver ? "drag-over" : ""} ${
+          isProcessing ? "processing" : ""
+        }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -89,11 +97,11 @@ function FileUpload({ onQuestionsLoaded }: FileUploadProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".txt"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={handleInputChange}
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         />
-        
+
         {isProcessing ? (
           <div className="processing">
             <div className="spinner"></div>
@@ -102,8 +110,11 @@ function FileUpload({ onQuestionsLoaded }: FileUploadProps) {
         ) : (
           <div className="upload-content">
             <div className="upload-icon">📄</div>
-            <p>Drop your .txt file here or click to browse</p>
-            <p className="file-format">Expected format: Category, Question, Options A-D, Answer, Explanation</p>
+            <p>Drop your .xlsx file here or click to browse</p>
+            <p className="file-format">
+              Expected columns (7): Category | Question | Option A (correct) |
+              Option B | Option C | Option D | Option E
+            </p>
           </div>
         )}
       </div>
@@ -115,24 +126,14 @@ function FileUpload({ onQuestionsLoaded }: FileUploadProps) {
       )}
 
       <div className="format-example">
-        <h3>Expected File Format:</h3>
-        <pre>{`Category:
-Math
+        <h3>Expected XLSX Format:</h3>
+        <pre>{`Sheet 1 (first row is header; ignored):
+| category | question       | option A (correct) | option B | option C | option D | option E |
+| Math     | What is 2+2?   | 4                   | 3        | 5        | 6        | 7        |
 
-Question:
-What is 2 + 2?
-
-Options:
-A. 3
-B. 4
-C. 5
-D. 6
-
-Answer:
-B
-
-Explanation:
-Basic addition: 2 + 2 equals 4`}</pre>
+Notes:
+- The third column is the correct option (A). We'll set the correct letter to 'A'.
+- No explanation in the file; it will be left empty.`}</pre>
       </div>
     </div>
   );

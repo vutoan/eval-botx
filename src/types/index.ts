@@ -27,9 +27,11 @@ export interface ParsedQuestion {
 }
 
 export interface APIRequest {
-  user_question: string;
-  case_id: string;
-  settings_file_name: string;
+  messages: { role: string; content: string }[];
+  org_id: string;
+  include_metadata: boolean;
+  stream: boolean;
+  settings_file: string;
 }
 
 export interface APIResponse {

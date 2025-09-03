@@ -1,4 +1,45 @@
 import type { ParsedQuestion, QuestionData, QuestionsCollection } from '../types';
+import * as XLSX from 'xlsx';
+
+export async function parseXlsxFile(file: File): Promise<ParsedQuestion[]> {
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data, { type: 'array' });
+  const firstSheetName = workbook.SheetNames[0];
+  if (!firstSheetName) return [];
+
+  const sheet = workbook.Sheets[firstSheetName];
+  // Read as 2D array; header:1 returns rows with cell values
+  const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][];
+  if (!rawRows || rawRows.length <= 1) return [];
+  const rows = rawRows.filter(row => row.length > 0);
+  const parsed: ParsedQuestion[] = [];
+  // Skip the first row (header)
+  for (let r = 1; r < rows.length; r++) {
+    const row = (rows[r] ?? []) as unknown[];
+    // Expect 7 columns: category, question, option A (correct), option B, option C, option D, option E
+    const [category, question, optA, optB, optC, optD, optE] = row;
+    const toStr = (v: unknown) => (v === null || v === undefined ? '' : String(v)).trim();
+    const options = [optA, optB, optC, optD, optE].map(toStr);
+  const categoryStr = toStr(category);
+  const questionStr = toStr(question);
+
+    if (!categoryStr || !questionStr || options.some(o => !o)) {
+      // Skip incomplete rows
+      continue;
+    }
+
+  // Third column is Option A and is the correct answer; answer letter is always 'A'
+    parsed.push({
+      category: categoryStr,
+      question: questionStr,
+      options,
+      answer: 'A',
+      explanation: ''
+    });
+  }
+
+  return parsed;
+}
 
 export function parseTextFile(content: string): ParsedQuestion[] {
   const questions: ParsedQuestion[] = [];
@@ -62,7 +103,7 @@ function isCompleteQuestion(question: Partial<ParsedQuestion>): boolean {
     question.category &&
     question.question &&
     question.options &&
-    question.options.length === 4 &&
+    (question.options.length === 4 || question.options.length === 5) &&
     question.answer &&
     question.explanation
   );
