@@ -28,9 +28,9 @@ export interface ParsedQuestion {
 
 export interface APIRequest {
   messages: { role: string; content: string }[];
-  org_id: string;
-  include_metadata: boolean;
-  stream: boolean;
+  org_id?: string;
+  include_metadata?: boolean;
+  stream?: boolean;
   settings_file: string;
 }
 

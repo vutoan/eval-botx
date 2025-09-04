@@ -151,7 +151,7 @@ ${question}
 ${optionsText}
 
 <TASK>
-Select a single choice letter from the ANSWERS that answer the QUESTION. You should also provide a short explanation (< 100 words). Return your response in JSON format:
+Select a single choice letter from the ANSWERS that answer the QUESTION. You should also provide a short explanation (< 100 words). Return your response in a single JSON object, Do not wrap the json codes in JSON markers:
 {"ANSWER": "B", "SHORT EXPLANATION": "..."}.`;
 }
 
